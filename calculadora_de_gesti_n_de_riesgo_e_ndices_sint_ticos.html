@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora de Gestión de Riesgo & Visor de Pips | Índices Sintéticos & Oro</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#080c15',
+              card: '#111827',
+              inner: '#162032',
+              border: '#1f293d',
+              accent: '#06b6d4',
+              emerald: '#10b981',
+              rose: '#f43f5e',
+              amber: '#f59e0b'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #080c15;
+      color: #f1f5f9;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { 
+      -webkit-appearance: none; 
+      margin: 0; 
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.22);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.22);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col p-3 sm:p-5 lg:p-7">
+
+  <!-- Header -->
+  <header class="max-w-7xl w-full mx-auto mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-brand-border pb-4">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center text-white shadow-lg">
+        <i class="fa-solid fa-calculator-simple text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight bg-gradient-to-r from-white via-slate-100 to-cyan-400 bg-clip-text text-transparent">
+          Calculadora de Riesgo & Visor de Pips
+        </h1>
+        <p class="text-xs text-slate-400">Todos los Boom y Crash (50 - 1000) • Step Index • Oro (XAU/USD)</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2.5">
+      <div class="flex items-center gap-2 bg-slate-900/90 border border-brand-border px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="text-slate-400">Motor:</span> Deriv MT5 & MetaTrader Standard
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 flex-grow">
+    
+    <!-- LEFT COLUMN: Parameter Controls (5 cols) -->
+    <div class="lg:col-span-5 flex flex-col gap-5">
+      
+      <!-- Card 1: Selección de Activo & Balance -->
+      <div class="bg-brand-card border border-brand-border rounded-2xl p-5 shadow-xl">
+        <h2 class="text-xs uppercase tracking-wider font-semibold text-cyan-400 mb-3.5 flex items-center gap-2">
+          <i class="fa-solid fa-layer-group"></i> 1. Par / Índice & Capital
+        </h2>
+
+        <div class="space-y-4">
+          <!-- Activo Selector -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Índice o Instrumento</label>
+            <div class="relative">
+              <select id="assetSelect" class="w-full bg-slate-900/90 border border-brand-border rounded-xl px-4 py-2.5 text-sm font-semibold text-white focus:outline-none focus:border-cyan-500 appearance-none cursor-pointer">
+                <!-- Boom Series -->
+                <optgroup label="Boom Series">
+                  <option value="BOOM_50">Boom 50 Index</option>
+                  <option value="BOOM_100">Boom 100 Index</option>
+                  <option value="BOOM_150">Boom 150 Index</option>
+                  <option value="BOOM_200">Boom 200 Index</option>
+                  <option value="BOOM_300">Boom 300 Index (Lote Mín: 0.50)</option>
+                  <option value="BOOM_500">Boom 500 Index</option>
+                  <option value="BOOM_600">Boom 600 Index</option>
+                  <option value="BOOM_900">Boom 900 Index</option>
+                  <option value="BOOM_1000" selected>Boom 1000 Index (Decimales ignorados)</option>
+                </optgroup>
+                <!-- Crash Series -->
+                <optgroup label="Crash Series">
+                  <option value="CRASH_50">Crash 50 Index</option>
+                  <option value="CRASH_100">Crash 100 Index</option>
+                  <option value="CRASH_150">Crash 150 Index</option>
+                  <option value="CRASH_200">Crash 200 Index</option>
+                  <option value="CRASH_300">Crash 300 Index (Lote Mín: 0.50)</option>
+                  <option value="CRASH_500">Crash 500 Index</option>
+                  <option value="CRASH_600">Crash 600 Index</option>
+                  <option value="CRASH_900">Crash 900 Index</option>
+                  <option value="CRASH_1000">Crash 1000 Index (Decimales ignorados)</option>
+                </optgroup>
+                <!-- Step Index -->
+                <optgroup label="Step Series">
+                  <option value="STEP_INDEX">Step Index (0.1 por paso)</option>
+                </optgroup>
+                <!-- Commodities -->
+                <optgroup label="Metales Preciosos">
+                  <option value="XAUUSD">Oro / Gold (XAU/USD)</option>
+                </optgroup>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-4 top-3.5 text-slate-400 pointer-events-none text-xs"></i>
+            </div>
+            
+            <!-- Badge de Especificaciones del Par -->
+            <div class="mt-2 text-xs flex flex-wrap items-center justify-between text-slate-400 bg-slate-900/60 p-2.5 rounded-lg border border-brand-border gap-2">
+              <span>Lote Mínimo: <b id="specMinLot" class="text-cyan-400 mono">0.20</b></span>
+              <span>1 Punto / Pip: <b id="specPointVal" class="text-emerald-400 mono">$1.00</b> (a 1 lote)</span>
+            </div>
+          </div>
+
+          <!-- Tipo de Operación: Compra / Venta -->
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Dirección de Operación</label>
+            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-900/90 rounded-xl border border-brand-border">
+              <button type="button" id="btnBuy" class="py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all bg-emerald-600 text-white shadow-md">
+                <i class="fa-solid fa-arrow-trend-up"></i> COMPRA (Buy)
+              </button>
+              <button type="button" id="btnSell" class="py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all text-slate-400 hover:text-white">
+                <i class="fa-solid fa-arrow-trend-down"></i> VENTA (Sell)
+              </button>
+            </div>
+          </div>
+
+          <!-- Capital y Porcentaje -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">Balance de Cuenta</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400 font-semibold text-xs">$</span>
+                <input type="number" id="accountBalance" value="1000" min="1" step="any"
+                  class="w-full bg-slate-900/90 border border-brand-border rounded-xl pl-7 pr-3 py-2 text-sm mono text-white focus:outline-none focus:border-cyan-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">Modo de Riesgo</label>
+              <div class="flex rounded-xl overflow-hidden border border-brand-border bg-slate-900/90 mb-1">
+                <button type="button" id="modePercent" class="flex-1 py-1 text-xs font-semibold bg-cyan-600 text-white transition-colors">
+                  % Porc.
+                </button>
+                <button type="button" id="modeCash" class="flex-1 py-1 text-xs font-semibold text-slate-400 hover:text-white transition-colors">
+                  $ Fijo
+                </button>
+              </div>
+              <div class="relative">
+                <span id="riskSymbol" class="absolute left-3 top-2 text-cyan-400 font-semibold text-xs">%</span>
+                <input type="number" id="riskInput" value="1.0" min="0.01" step="any"
+                  class="w-full bg-slate-900/90 border border-brand-border rounded-xl pl-7 pr-3 py-1.5 text-sm mono text-white focus:outline-none focus:border-cyan-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Capital Total en Riesgo -->
+          <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs flex items-center justify-between text-slate-300">
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-shield-halved text-rose-400"></i> Capital arriesgado fijado:
+            </span>
+            <span id="effectiveRiskText" class="font-bold mono text-rose-400 text-sm">$10.00 USD</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Card 2: Niveles de Precio y Ratio -->
+      <div class="bg-brand-card border border-brand-border rounded-2xl p-5 shadow-xl">
+        <h2 class="text-xs uppercase tracking-wider font-semibold text-cyan-400 mb-3.5 flex items-center gap-2">
+          <i class="fa-solid fa-crosshairs"></i> 2. Precios & Relación R:R
+        </h2>
+
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5">Precio de Entrada</label>
+              <input type="number" id="entryPrice" value="5000.00" step="any"
+                class="w-full bg-slate-900/90 border border-brand-border rounded-xl px-3 py-2 text-sm mono text-white focus:outline-none focus:border-cyan-500">
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-slate-300 mb-1.5 flex justify-between">
+                <span>Stop Loss (SL)</span>
+              </label>
+              <input type="number" id="stopLossPrice" value="4990.00" step="any"
+                class="w-full bg-slate-900/90 border border-brand-border rounded-xl px-3 py-2 text-sm mono text-white focus:outline-none focus:border-rose-500">
+            </div>
+          </div>
+
+          <!-- R:R Dinámico -->
+          <div>
+            <div class="flex justify-between text-xs font-medium text-slate-300 mb-2">
+              <span>Ratio Riesgo : Beneficio Objetivo</span>
+              <span id="targetRatioLabel" class="text-cyan-400 font-bold mono">1 : 3</span>
+            </div>
+            <div class="grid grid-cols-6 gap-1.5 mb-2.5">
+              <button type="button" class="rr-btn py-1.5 text-xs font-semibold rounded-lg border border-brand-border bg-slate-900/70 hover:bg-slate-800 transition" data-rr="1">1:1</button>
+              <button type="button" class="rr-btn py-1.5 text-xs font-semibold rounded-lg border border-brand-border bg-slate-900/70 hover:bg-slate-800 transition" data-rr="2">1:2</button>
+              <button type="button" class="rr-btn py-1.5 text-xs font-semibold rounded-lg border border-cyan-500 bg-cyan-600/20 text-cyan-400 transition" data-rr="3">1:3</button>
+              <button type="button" class="rr-btn py-1.5 text-xs font-semibold rounded-lg border border-brand-border bg-slate-900/70 hover:bg-slate-800 transition" data-rr="4">1:4</button>
+              <button type="button" class="rr-btn py-1.5 text-xs font-semibold rounded-lg border border-brand-border bg-slate-900/70 hover:bg-slate-800 transition" data-rr="5">1:5</button>
+              <button type="button" class="rr-btn py-1.5 text-xs font-semibold rounded-lg border border-brand-border bg-slate-900/70 hover:bg-slate-800 transition" data-rr="10">1:10</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400">Personalizado 1 :</span>
+              <input type="number" id="customRrInput" value="3" min="0.1" step="0.5"
+                class="w-24 bg-slate-900/90 border border-brand-border rounded-lg px-2 py-1 text-xs mono text-white text-center focus:outline-none focus:border-cyan-500">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Inspector & Projections (7 cols) -->
+    <div class="lg:col-span-7 flex flex-col gap-5">
+      
+      <!-- WIDGET DESTACADO: VISOR DE PIPS & PUNTOS -->
+      <div class="bg-gradient-to-br from-slate-900 via-brand-card to-slate-900 border-2 border-cyan-500/40 rounded-2xl p-5 shadow-2xl relative overflow-hidden glow-cyan">
+        <div class="flex items-center justify-between mb-3 border-b border-brand-border pb-3">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 text-sm">
+              <i class="fa-solid fa-magnifying-glass-chart"></i>
+            </span>
+            <div>
+              <h3 class="text-sm font-bold text-white tracking-wide">Visor Inteligente de Pips & Puntos</h3>
+              <p class="text-[11px] text-slate-400" id="inspectorAssetTitle">Crash/Boom — Conteo real sin ruido de decimales</p>
+            </div>
+          </div>
+          <span id="inspectorRuleTag" class="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            Enteros = Pips
+          </span>
+        </div>
+
+        <!-- Explicación de cómo se cuenta en este par -->
+        <div id="inspectorHelpBox" class="p-3 rounded-xl bg-brand-inner/70 border border-brand-border text-xs text-slate-300 mb-4 flex items-start gap-2.5">
+          <i class="fa-solid fa-circle-info text-cyan-400 mt-0.5 text-sm flex-shrink-0"></i>
+          <p id="inspectorExplanation" class="leading-relaxed">
+            En <b>Crash 1000 / Boom 1000</b> los 4 dígitos decimales representan fracciones mínimas. 
+            <strong>La distancia real de pips se cuenta directamente en los números enteros.</strong> 1 entero de diferencia = 1 pip / punto = $1.00 de movimiento por cada lote entero de 1.00.
+          </p>
+        </div>
+
+        <!-- Comparador Visual de Puntos / Pips -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+          <!-- Col 1: Diferencia Numérica Bruta -->
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-brand-border">
+            <div class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Diferencia Bruta</div>
+            <div id="insRawDiff" class="text-base font-bold mono text-slate-200 mt-1">10.0000</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">|Entrada - SL|</div>
+          </div>
+
+          <!-- Col 2: Pips / Puntos Reales (Enteros Efectivos) -->
+          <div class="bg-cyan-950/40 p-3 rounded-xl border border-cyan-500/40">
+            <div class="text-[10px] uppercase font-bold text-cyan-400 tracking-wider flex items-center justify-center gap-1">
+              <i class="fa-solid fa-bullseye"></i> Pips Reales
+            </div>
+            <div id="insEffectivePips" class="text-xl font-extrabold mono text-cyan-300 mt-0.5">10.00</div>
+            <div id="insUnitName" class="text-[10px] text-cyan-400/80 font-medium mt-0.5">Puntos / Pips Netos</div>
+          </div>
+
+          <!-- Col 3: Impacto en Dólares por Lote Mínimo -->
+          <div class="bg-slate-900/80 p-3 rounded-xl border border-brand-border">
+            <div class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Con Lote Mínimo (<span id="insMinLotBadge">0.20</span>)</div>
+            <div id="insMinLotImpact" class="text-base font-bold mono text-emerald-400 mt-1">$2.00 USD</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">pérdida o ganancia mínima</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lotaje Calculado & Resultados de Ejecución -->
+      <div class="bg-brand-card border border-brand-border rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xs uppercase tracking-wider font-semibold text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-bolt text-emerald-400"></i> Resultado de Lotaje
+          </h2>
+          <span id="orderTypeBadge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+            COMPRA (Buy)
+          </span>
+        </div>
+
+        <!-- Hero Box del Lotaje -->
+        <div class="bg-brand-inner rounded-xl p-4 border border-emerald-500/30 mb-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div>
+            <div class="text-xs text-slate-400 mb-0.5">Lotaje Exacto a Operar:</div>
+            <div class="flex items-baseline gap-2">
+              <span id="calcLotSize" class="text-4xl sm:text-5xl font-extrabold mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-300 to-emerald-300">
+                1.00
+              </span>
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lotes</span>
+            </div>
+            <div id="minLotWarning" class="hidden text-[11px] text-amber-400 font-medium mt-1 flex items-center gap-1">
+              <i class="fa-solid fa-triangle-exclamation"></i> Ajustado al lotaje mínimo requerido por el broker.
+            </div>
+          </div>
+
+          <!-- Métricas Rápidas SL y TP -->
+          <div class="w-full sm:w-auto flex sm:flex-col justify-between sm:text-right gap-2 border-t sm:border-t-0 sm:border-l border-brand-border pt-2 sm:pt-0 sm:pl-4">
+            <div>
+              <span class="text-[10px] uppercase text-rose-400 font-semibold block">Pérdida al SL</span>
+              <span id="displayMaxLoss" class="text-sm font-bold mono text-rose-400">-$10.00</span>
+            </div>
+            <div>
+              <span class="text-[10px] uppercase text-emerald-400 font-semibold block">Ganancia al TP (<span id="displayTpRatio">1:3</span>)</span>
+              <span id="displayTargetProfit" class="text-sm font-bold mono text-emerald-400">+$30.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Niveles de Precios SL y TP con Distancias -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-rose-950/20 border border-rose-500/25 rounded-xl p-3">
+            <div class="text-[11px] uppercase tracking-wider font-bold text-rose-400 mb-1 flex justify-between">
+              <span>Stop Loss</span>
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div id="displaySlPrice" class="text-base font-bold mono text-white">4990.00</div>
+            <div class="text-[11px] text-slate-400 font-mono mt-0.5">Distancia: <span id="displaySlDist">10.00</span></div>
+          </div>
+
+          <div class="bg-emerald-950/20 border border-emerald-500/25 rounded-xl p-3">
+            <div class="text-[11px] uppercase tracking-wider font-bold text-emerald-400 mb-1 flex justify-between">
+              <span>Take Profit Dinámico</span>
+              <i class="fa-solid fa-bullseye"></i>
+            </div>
+            <div id="displayTpPrice" class="text-base font-bold mono text-emerald-400">5030.00</div>
+            <div class="text-[11px] text-slate-400 font-mono mt-0.5">Distancia: <span id="displayTpDist">30.00</span></div>
+          </div>
+        </div>
+
+        <!-- Matriz de Proyección R:R -->
+        <div>
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-300 mb-2">
+            <span>Matriz de Proyección Multi-Objetivo</span>
+            <span class="text-[11px] text-slate-500">Cálculo dinámico según tu SL</span>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-brand-border">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-900/80 text-[10px] text-slate-400 uppercase tracking-wider border-b border-brand-border">
+                <tr>
+                  <th class="py-2 px-3">Ratio</th>
+                  <th class="py-2 px-2">Precio TP</th>
+                  <th class="py-2 px-2">Pips Distancia</th>
+                  <th class="py-2 px-2 text-right">Beneficio ($)</th>
+                  <th class="py-2 px-3 text-right">Crecimiento Cuenta</th>
+                </tr>
+              </thead>
+              <tbody id="projectionTableBody" class="divide-y divide-brand-border/60 font-mono text-[11px] bg-slate-900/40">
+                <!-- Inyectado dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="max-w-7xl w-full mx-auto mt-6 pt-3 border-t border-brand-border text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div>
+      Índices Boom & Crash (50 - 1000) • Step Index • Metales (XAU/USD).
+    </div>
+    <div class="text-slate-400">
+      Gestión de Capital Profesional & Control de Drawdown
+    </div>
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    // Asset specifications and Pips calculation rules
+    const ASSET_SPECS = {
+      // Boom series
+      BOOM_50:   { name: 'Boom 50 Index',   minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 1500.0, defaultSlDelta: 8.0, pipsRule: 'direct_pts', explanation: 'En Boom 50 cada punto entero de diferencia es 1 pip ($1.00 por lote estándar).' },
+      BOOM_100:  { name: 'Boom 100 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 1800.0, defaultSlDelta: 8.0, pipsRule: 'direct_pts', explanation: 'En Boom 100 cada punto entero equivale a 1 pip ($1.00 por lote 1.00).' },
+      BOOM_150:  { name: 'Boom 150 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 2000.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Boom 150 la distancia en números enteros corresponde al total de pips.' },
+      BOOM_200:  { name: 'Boom 200 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 2200.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Boom 200 se calcula restando directamente los enteros: 1 entero = 1 pip.' },
+      BOOM_300:  { name: 'Boom 300 Index',  minLot: 0.50, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 2500.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'Boom 300 tiene alta volatilidad y un lotaje mínimo de 0.50. 1 punto entero = 1 pip.' },
+      BOOM_500:  { name: 'Boom 500 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 4200.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Boom 500 se cuentan los enteros del precio: de 4200 a 4210 hay 10 pips.' },
+      BOOM_600:  { name: 'Boom 600 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 5000.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Boom 600 la variación de 1 punto de precio representa 1 pip / $1 con lote 1.0.' },
+      BOOM_900:  { name: 'Boom 900 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 6500.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Boom 900 se cuentan los puntos enteros directamente como pips.' },
+      BOOM_1000: { name: 'Boom 1000 Index', minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 4, defaultPrice: 12000.0, defaultSlDelta: 15.0, pipsRule: 'ignore_4_decimals', explanation: 'En Boom 1000 se ignoran los 4 dígitos decimales de la pantalla. La resta de los números enteros te da la cantidad exacta de pips (1 entero = 1 pip = $1.00 por lote).' },
+
+      // Crash series
+      CRASH_50:   { name: 'Crash 50 Index',   minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 1600.0, defaultSlDelta: 8.0, pipsRule: 'direct_pts', explanation: 'En Crash 50 cada punto entero de recorrido es 1 pip ($1.00 por lote 1.00).' },
+      CRASH_100:  { name: 'Crash 100 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 1900.0, defaultSlDelta: 8.0, pipsRule: 'direct_pts', explanation: 'En Crash 100 cada movimiento de 1 entero en el precio equivale a 1 pip.' },
+      CRASH_150:  { name: 'Crash 150 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 2100.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Crash 150 la cuenta de pips es directa sobre la parte entera del precio.' },
+      CRASH_200:  { name: 'Crash 200 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 2300.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Crash 200 calcula la distancia entre enteros: 1 entero = 1 pip.' },
+      CRASH_300:  { name: 'Crash 300 Index',  minLot: 0.50, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 2800.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'Crash 300 tiene lote mínimo de 0.50. 1 punto entero de caída o subida = 1 pip.' },
+      CRASH_500:  { name: 'Crash 500 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 4500.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Crash 500 los pips se calculan directamente en las unidades enteras.' },
+      CRASH_600:  { name: 'Crash 600 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 5500.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Crash 600 cada entero recorrido corresponde a 1 pip / $1.00 por lote.' },
+      CRASH_900:  { name: 'Crash 900 Index',  minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 2, defaultPrice: 7000.0, defaultSlDelta: 10.0, pipsRule: 'direct_pts', explanation: 'En Crash 900 la diferencia de enteros representa directamente los pips.' },
+      CRASH_1000: { name: 'Crash 1000 Index', minLot: 0.20, lotStep: 0.01, pointValuePerLot: 1.0, decimals: 4, defaultPrice: 8500.0, defaultSlDelta: 15.0, pipsRule: 'ignore_4_decimals', explanation: 'En Crash 1000 ignora los 4 decimales. La resta de los números enteros es tu cantidad exacta de pips (ejemplo: 8500 a 8520 son 20 pips exactos).' },
+
+      // Step Index
+      STEP_INDEX: { name: 'Step Index', minLot: 0.10, lotStep: 0.01, pointValuePerLot: 10.0, decimals: 1, defaultPrice: 8200.0, defaultSlDelta: 2.0, pipsRule: 'step_tenths', explanation: 'El Step Index se mueve en pasos fijos de 0.1. Cada variación de 0.1 es 1 paso. Un punto entero de precio equivale a 10 pasos ($10 por lote 1.0).' },
+
+      // Gold
+      XAUUSD:     { name: 'Oro (XAU/USD)', minLot: 0.01, lotStep: 0.01, pointValuePerLot: 100.0, decimals: 2, defaultPrice: 2650.0, defaultSlDelta: 5.0, pipsRule: 'gold_standard', explanation: 'En el Oro (contrato 100 oz), $1.00 de movimiento equivale a 10 pips tradicionales (100 puntos en MT5). Con 0.01 de lote, cada $1 de recorrido representa $1.00 USD.' }
+    };
+
+    // State
+    let currentAsset = 'BOOM_1000';
+    let tradeType = 'BUY'; // 'BUY' | 'SELL'
+    let riskMode = 'PERCENT'; // 'PERCENT' | 'CASH'
+    let selectedRR = 3.0;
+
+    // DOM Elements
+    const assetSelect = document.getElementById('assetSelect');
+    const specMinLot = document.getElementById('specMinLot');
+    const specPointVal = document.getElementById('specPointVal');
+    const btnBuy = document.getElementById('btnBuy');
+    const btnSell = document.getElementById('btnSell');
+    const accountBalanceInput = document.getElementById('accountBalance');
+    const modePercent = document.getElementById('modePercent');
+    const modeCash = document.getElementById('modeCash');
+    const riskInput = document.getElementById('riskInput');
+    const riskSymbol = document.getElementById('riskSymbol');
+    const effectiveRiskText = document.getElementById('effectiveRiskText');
+    const entryPriceInput = document.getElementById('entryPrice');
+    const stopLossPriceInput = document.getElementById('stopLossPrice');
+    const customRrInput = document.getElementById('customRrInput');
+    const targetRatioLabel = document.getElementById('targetRatioLabel');
+    const rrButtons = document.querySelectorAll('.rr-btn');
+
+    // Inspector DOM Elements
+    const inspectorAssetTitle = document.getElementById('inspectorAssetTitle');
+    const inspectorRuleTag = document.getElementById('inspectorRuleTag');
+    const inspectorExplanation = document.getElementById('inspectorExplanation');
+    const insRawDiff = document.getElementById('insRawDiff');
+    const insEffectivePips = document.getElementById('insEffectivePips');
+    const insUnitName = document.getElementById('insUnitName');
+    const insMinLotBadge = document.getElementById('insMinLotBadge');
+    const insMinLotImpact = document.getElementById('insMinLotImpact');
+
+    // Main Outputs
+    const orderTypeBadge = document.getElementById('orderTypeBadge');
+    const calcLotSize = document.getElementById('calcLotSize');
+    const minLotWarning = document.getElementById('minLotWarning');
+    const displaySlPrice = document.getElementById('displaySlPrice');
+    const displayMaxLoss = document.getElementById('displayMaxLoss');
+    const displayTpPrice = document.getElementById('displayTpPrice');
+    const displayTargetProfit = document.getElementById('displayTargetProfit');
+    const displayTpRatio = document.getElementById('displayTpRatio');
+    const displaySlDist = document.getElementById('displaySlDist');
+    const displayTpDist = document.getElementById('displayTpDist');
+    const projectionTableBody = document.getElementById('projectionTableBody');
+
+    // Handle Asset Selection
+    function handleAssetChange(initPrices = true) {
+      currentAsset = assetSelect.value;
+      const spec = ASSET_SPECS[currentAsset];
+
+      specMinLot.textContent = spec.minLot.toFixed(2);
+      specPointVal.textContent = `$${spec.pointValuePerLot.toFixed(2)}`;
+      insMinLotBadge.textContent = spec.minLot.toFixed(2);
+
+      // Actualizar Inspector con las reglas específicas del par
+      inspectorAssetTitle.textContent = `${spec.name} — Regla de medición`;
+      inspectorExplanation.innerHTML = spec.explanation;
+
+      if (spec.pipsRule === 'ignore_4_decimals') {
+        inspectorRuleTag.textContent = 'Decimales Ignorados';
+        insUnitName.textContent = 'Pips Enteros';
+      } else if (spec.pipsRule === 'step_tenths') {
+        inspectorRuleTag.textContent = 'Pasos de 0.1';
+        insUnitName.textContent = 'Pasos / Puntos';
+      } else if (spec.pipsRule === 'gold_standard') {
+        inspectorRuleTag.textContent = '$1 = 10 Pips Clásicos';
+        insUnitName.textContent = 'Pips (0.10)';
+      } else {
+        inspectorRuleTag.textContent = '1 Entero = 1 Pip';
+        insUnitName.textContent = 'Pips / Puntos';
+      }
+
+      if (initPrices) {
+        entryPriceInput.value = spec.defaultPrice.toFixed(spec.decimals);
+        if (tradeType === 'BUY') {
+          stopLossPriceInput.value = (spec.defaultPrice - spec.defaultSlDelta).toFixed(spec.decimals);
+        } else {
+          stopLossPriceInput.value = (spec.defaultPrice + spec.defaultSlDelta).toFixed(spec.decimals);
+        }
+      }
+      calculate();
+    }
+
+    // Set Order Type
+    function setTradeType(type) {
+      tradeType = type;
+      if (type === 'BUY') {
+        btnBuy.className = 'py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all bg-emerald-600 text-white shadow-md';
+        btnSell.className = 'py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all text-slate-400 hover:text-white';
+        orderTypeBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-500/20 text-emerald-400 border border-emerald-500/40';
+        orderTypeBadge.textContent = 'COMPRA (Buy)';
+      } else {
+        btnSell.className = 'py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all bg-rose-600 text-white shadow-md';
+        btnBuy.className = 'py-2 rounded-lg font-semibold text-xs flex items-center justify-center gap-2 transition-all text-slate-400 hover:text-white';
+        orderTypeBadge.className = 'px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-rose-500/20 text-rose-400 border border-rose-500/40';
+        orderTypeBadge.textContent = 'VENTA (Sell)';
+      }
+      calculate();
+    }
+
+    // Set Risk Mode
+    function setRiskMode(mode) {
+      riskMode = mode;
+      if (mode === 'PERCENT') {
+        modePercent.className = 'flex-1 py-1 text-xs font-semibold bg-cyan-600 text-white transition-colors';
+        modeCash.className = 'flex-1 py-1 text-xs font-semibold text-slate-400 hover:text-white transition-colors';
+        riskSymbol.textContent = '%';
+        if (parseFloat(riskInput.value) > 10) riskInput.value = '1.0';
+      } else {
+        modeCash.className = 'flex-1 py-1 text-xs font-semibold bg-cyan-600 text-white transition-colors';
+        modePercent.className = 'flex-1 py-1 text-xs font-semibold text-slate-400 hover:text-white transition-colors';
+        riskSymbol.textContent = '$';
+        const balance = parseFloat(accountBalanceInput.value) || 1000;
+        riskInput.value = (balance * 0.01).toFixed(2);
+      }
+      calculate();
+    }
+
+    // Set Risk:Reward
+    function setRR(rr) {
+      selectedRR = parseFloat(rr);
+      customRrInput.value = selectedRR;
+      targetRatioLabel.textContent = `1 : ${selectedRR}`;
+      
+      rrButtons.forEach(btn => {
+        if (parseFloat(btn.dataset.rr) === selectedRR) {
+          btn.className = 'rr-btn py-1.5 text-xs font-semibold rounded-lg border border-cyan-500 bg-cyan-600/20 text-cyan-400 transition';
+        } else {
+          btn.className = 'rr-btn py-1.5 text-xs font-semibold rounded-lg border border-brand-border bg-slate-900/70 hover:bg-slate-800 transition';
+        }
+      });
+      calculate();
+    }
+
+    // Calculation Engine
+    function calculate() {
+      const spec = ASSET_SPECS[currentAsset];
+      const balance = parseFloat(accountBalanceInput.value) || 0;
+      const rawRisk = parseFloat(riskInput.value) || 0;
+      const entry = parseFloat(entryPriceInput.value) || 0;
+      const sl = parseFloat(stopLossPriceInput.value) || 0;
+      const rr = parseFloat(customRrInput.value) || selectedRR || 1;
+
+      // 1. Riesgo en Dólares ($)
+      let dollarRisk = 0;
+      if (riskMode === 'PERCENT') {
+        dollarRisk = balance * (rawRisk / 100);
+      } else {
+        dollarRisk = rawRisk;
+      }
+      dollarRisk = Math.max(0, dollarRisk);
+      effectiveRiskText.textContent = `$${dollarRisk.toFixed(2)} USD`;
+
+      // 2. Distancia Matemática
+      const rawDistance = Math.abs(entry - sl);
+      insRawDiff.textContent = rawDistance.toFixed(spec.decimals);
+
+      // Auto-detección de compra/venta según posición del SL
+      if (entry > 0 && sl > 0) {
+        if (entry > sl && tradeType !== 'BUY') {
+          setTradeType('BUY');
+          return;
+        } else if (entry < sl && tradeType !== 'SELL') {
+          setTradeType('SELL');
+          return;
+        }
+      }
+
+      // 3. Conversión del Visor de Pips según el activo
+      let effectivePips = 0;
+      if (spec.pipsRule === 'ignore_4_decimals') {
+        // Ignorar decimales en Crash/Boom 1000
+        effectivePips = Math.abs(Math.floor(entry) - Math.floor(sl));
+      } else if (spec.pipsRule === 'step_tenths') {
+        // En Step Index cada 0.1 es 1 paso
+        effectivePips = rawDistance * 10;
+      } else if (spec.pipsRule === 'gold_standard') {
+        // En Oro cada $1.00 son 10 pips clásicos
+        effectivePips = rawDistance * 10;
+      } else {
+        // Directo enteros/puntos
+        effectivePips = rawDistance;
+      }
+      insEffectivePips.textContent = effectivePips.toFixed(spec.pipsRule === 'ignore_4_decimals' ? 0 : 1);
+
+      // Impacto monetario con lote mínimo
+      const minLotMonetaryImpact = rawDistance * spec.pointValuePerLot * spec.minLot;
+      insMinLotImpact.textContent = `$${minLotMonetaryImpact.toFixed(2)} USD`;
+
+      // 4. Cálculo de Lotaje
+      let recommendedLot = 0;
+      let effectiveLot = 0;
+      let isUnderMin = false;
+
+      if (rawDistance > 0 && dollarRisk > 0) {
+        recommendedLot = dollarRisk / (rawDistance * spec.pointValuePerLot);
+        
+        // Redondeo al paso del broker
+        const step = spec.lotStep;
+        let roundedLot = Math.floor(recommendedLot / step) * step;
+
+        if (roundedLot < spec.minLot) {
+          effectiveLot = spec.minLot;
+          isUnderMin = true;
+        } else {
+          effectiveLot = roundedLot;
+          isUnderMin = false;
+        }
+      }
+
+      // Mostrar Lote
+      calcLotSize.textContent = effectiveLot.toFixed(2);
+      if (isUnderMin && rawDistance > 0) {
+        minLotWarning.classList.remove('hidden');
+      } else {
+        minLotWarning.classList.add('hidden');
+      }
+
+      // Pérdida real con el lote fijado
+      const actualLoss = effectiveLot * rawDistance * spec.pointValuePerLot;
+      displayMaxLoss.textContent = `-$${actualLoss.toFixed(2)}`;
+      displaySlPrice.textContent = sl.toFixed(spec.decimals);
+      displaySlDist.textContent = `${rawDistance.toFixed(spec.decimals)} pts`;
+
+      // 5. Cálculo Dinámico de Take Profit
+      const tpDistance = rawDistance * rr;
+      let tpPrice = 0;
+      if (tradeType === 'BUY') {
+        tpPrice = entry + tpDistance;
+      } else {
+        tpPrice = entry - tpDistance;
+      }
+
+      const projectedGain = effectiveLot * tpDistance * spec.pointValuePerLot;
+      displayTpPrice.textContent = tpPrice.toFixed(spec.decimals);
+      displayTargetProfit.textContent = `+$${projectedGain.toFixed(2)}`;
+      displayTpRatio.textContent = `1:${rr}`;
+      displayTpDist.textContent = `${tpDistance.toFixed(spec.decimals)} pts`;
+
+      // 6. Matriz de Proyección
+      buildProjectionTable(entry, rawDistance, spec, effectiveLot, balance);
+    }
+
+    // Build Table Matrix
+    function buildProjectionTable(entry, slDist, spec, lot, balance) {
+      const projectionRRs = [1, 1.5, 2, 3, 4, 5, 10];
+      let html = '';
+
+      projectionRRs.forEach(r => {
+        const dist = slDist * r;
+        const targetPrice = tradeType === 'BUY' ? (entry + dist) : (entry - dist);
+        const gain = lot * dist * spec.pointValuePerLot;
+        const gainPct = balance > 0 ? ((gain / balance) * 100).toFixed(1) : 0;
+        const isCurrent = (Math.abs(r - selectedRR) < 0.05);
+
+        // Representación de pips en tabla
+        let tablePips = dist;
+        if (spec.pipsRule === 'ignore_4_decimals') {
+          tablePips = Math.round(dist);
+        } else if (spec.pipsRule === 'step_tenths' || spec.pipsRule === 'gold_standard') {
+          tablePips = dist * 10;
+        }
+
+        html += `
+          <tr class="${isCurrent ? 'bg-cyan-500/15 text-cyan-300 font-semibold' : 'hover:bg-slate-800/40 text-slate-300'} transition-colors">
+            <td class="py-2 px-3">
+              <span class="inline-flex items-center gap-1.5">
+                ${isCurrent ? '<i class="fa-solid fa-arrow-right text-[10px] text-cyan-400"></i>' : ''}
+                1 : ${r}
+              </span>
+            </td>
+            <td class="py-2 px-2 font-bold">${targetPrice.toFixed(spec.decimals)}</td>
+            <td class="py-2 px-2 text-slate-400">${tablePips.toFixed(spec.pipsRule === 'ignore_4_decimals' ? 0 : 1)}</td>
+            <td class="py-2 px-2 text-right text-emerald-400 font-bold">+$${gain.toFixed(2)}</td>
+            <td class="py-2 px-3 text-right text-emerald-400/90">+${gainPct}%</td>
+          </tr>
+        `;
+      });
+
+      projectionTableBody.innerHTML = html;
+    }
+
+    // Event Listeners
+    assetSelect.addEventListener('change', () => handleAssetChange(true));
+    btnBuy.addEventListener('click', () => setTradeType('BUY'));
+    btnSell.addEventListener('click', () => setTradeType('SELL'));
+    modePercent.addEventListener('click', () => setRiskMode('PERCENT'));
+    modeCash.addEventListener('click', () => setRiskMode('CASH'));
+
+    accountBalanceInput.addEventListener('input', calculate);
+    riskInput.addEventListener('input', calculate);
+    entryPriceInput.addEventListener('input', calculate);
+    stopLossPriceInput.addEventListener('input', calculate);
+
+    customRrInput.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 1;
+      selectedRR = val;
+      targetRatioLabel.textContent = `1 : ${val}`;
+      rrButtons.forEach(btn => {
+        if (parseFloat(btn.dataset.rr) === val) {
+          btn.className = 'rr-btn py-1.5 text-xs font-semibold rounded-lg border border-cyan-500 bg-cyan-600/20 text-cyan-400 transition';
+        } else {
+          btn.className = 'rr-btn py-1.5 text-xs font-semibold rounded-lg border border-brand-border bg-slate-900/70 hover:bg-slate-800 transition';
+        }
+      });
+      calculate();
+    });
+
+    rrButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        setRR(button.dataset.rr);
+      });
+    });
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', () => {
+      handleAssetChange(false);
+    });
+  </script>
+</body>
+</html>
